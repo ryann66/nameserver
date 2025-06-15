@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 
 				// copy in ip address
 				ip_to_string(&out, ebuf);
-				ebuf += IPV4_MAX_LENGTH;
+				ebuf += strlen(ebuf);
 
 				// add delim after ip addr
 				ebuf[0] = DELIM[0];
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 
 				// copy in port number
 				port_to_string(&out, ebuf);
-				ebuf += PORT_MAX_LENGTH;
+				ebuf += strlen(ebuf);
 
 				// null-terminate
 				ebuf[0] = '\0';
@@ -100,18 +100,16 @@ int main(int argc, char** argv) {
 			
 			char* narg = strchr(buf + KEYWORD_LEN, DELIM[0]);
 			if (narg != NULL) narg[0] == '\0';  // leave null byte for later use of service name
-			if (narg++ == NULL || strlen(narg) < IPV4_MAX_LENGTH) {
+			if (narg++ == NULL || strlen(narg) < IPV4_MAX_LENGTH || string_to_ip(&tmp, narg)) {
 				dprintf("Invalid register IP\n");
 				continue;
 			}
-			string_to_ip(&tmp, narg);
 
 			narg = strchr(narg, DELIM[0]);
-			if (narg++ == NULL || strlen(narg) < PORT_MAX_LENGTH) {
+			if (narg++ == NULL || strlen(narg) < PORT_MAX_LENGTH || string_to_port(&tmp, narg)) {
 				dprintf("Invalid register port\n");
 				continue;
 			}
-			string_to_port(&tmp, narg);
 
 			register_serv(buf + KEYWORD_LEN, tmp);
 			

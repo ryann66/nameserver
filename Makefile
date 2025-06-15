@@ -20,7 +20,7 @@ server: server.o register.o
 register.o: register.c register.h server.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-server.o: server.c server.h register.h
+server.o: server.c server.h register.h utils.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
