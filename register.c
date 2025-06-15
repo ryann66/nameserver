@@ -6,8 +6,13 @@
 #include "register.h"
 #include "server.h"
 
+int init() {
+
+}
+
 void register_serv(char serv[MAX_ENTRY_LENGTH], struct sockaddr_in ipp)
 {
+
 }
 
 bool deregister_serv(char serv[MAX_ENTRY_LENGTH])
@@ -18,4 +23,8 @@ bool deregister_serv(char serv[MAX_ENTRY_LENGTH])
 bool find_serv(char serv[MAX_ENTRY_LENGTH], struct sockaddr_in *ipp_out)
 {
 	return false;
+}
+
+void cleanup() {
+
 }

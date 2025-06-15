@@ -34,6 +34,12 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
+	// initialize database
+	if (init()) {
+		close(netfd);
+		return -1;
+	}
+
 	uint8_t buf[UDP_BUFFER_SIZE];
 	while (true) {
 		// read udp message into buf
@@ -60,4 +66,10 @@ int main(int argc, char** argv) {
 			continue;
 		}
 	}
+
+	close(netfd);
+	cleanup();
+
+	dprintf("Unreachable code reached\n");
+	return -1;
 }
