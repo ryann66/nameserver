@@ -11,6 +11,7 @@
 
 #include "server.h"
 #include "register.h"
+#include "utils.h"
 
 #ifdef DEBUG
 #define dprintf(format, ...) fprintf(stderr, format __VA_OPT__(,) __VA_ARGS__)
@@ -51,18 +52,90 @@ int main(int argc, char** argv) {
 		}
 		buf[sz] = '\0';
 
+		if (addr.sin_family != AF_INET) {
+			// ignore message
+			dprintf("Non-IPV4 packet recieved\n");
+			continue;
+		}
+
+		// names must be at least 1 character long
+		if (strlen(buf) < KEYWORD_LEN + 1) {
+			// ignore message
+			dprintf("Message too short to be a command\n");
+			continue;
+		}
+		
 		// parse message
 		if (strncmp(buf, KEYWORD_GET, KEYWORD_LEN)) {
+			char* ebuf = buf + strlen(buf);
+			struct sockaddr_in out;
+			if (find_serv(buf+KEYWORD_LEN, &out)) {
+				// change command (for response)
+				strcpy(buf, KEYWORD_SUC_GET);
 
+				// add delim after name
+				ebuf[0] = DELIM[0];
+				ebuf++;
+
+				// copy in ip address
+				ip_to_string(&out, ebuf);
+				ebuf += IPV4_MAX_LENGTH;
+
+				// add delim after ip addr
+				ebuf[0] = DELIM[0];
+				ebuf++;
+
+				// copy in port number
+				port_to_string(&out, ebuf);
+				ebuf += PORT_MAX_LENGTH;
+
+				// null-terminate
+				ebuf[0] = '\0';
+			} else {
+				strcpy(buf, KEYWORD_ERR_NOT_FOUND);
+			}
 		} else if (strncmp(buf, KEYWORD_REGISTER, KEYWORD_LEN) == 0) {
+			struct sockaddr_in tmp;
+			tmp.sin_family = AF_INET;
 			
+			char* narg = strchr(buf + KEYWORD_LEN, DELIM[0]);
+			if (narg != NULL) narg[0] == '\0';  // leave null byte for later use of service name
+			if (narg++ == NULL || strlen(narg) < IPV4_MAX_LENGTH) {
+				dprintf("Invalid register IP\n");
+				continue;
+			}
+			string_to_ip(&tmp, narg);
+
+			narg = strchr(narg, DELIM[0]);
+			if (narg++ == NULL || strlen(narg) < PORT_MAX_LENGTH) {
+				dprintf("Invalid register port\n");
+				continue;
+			}
+			string_to_port(&tmp, narg);
+
+			register_serv(buf + KEYWORD_LEN, tmp);
+			
+			strcpy(buf, KEYWORD_SUC_REG);
 		} else if (strncmp(buf, KEYWORD_SELF_REGISTER, KEYWORD_LEN)) {
-
+			register_serv(buf + KEYWORD_LEN, addr);
+			strcpy(buf, KEYWORD_SUC_REG);
 		} else if (strncmp(buf, KEYWORD_DEREGISTER, KEYWORD_LEN)) {
-
+			if (deregister_serv(buf + KEYWORD_LEN)) {
+				strcpy(buf, KEYWORD_SUC_DEREG);
+			} else {
+				strcpy(buf, KEYWORD_ERR_NOT_FOUND);
+			}
 		} else {
 			// ignore message
 			dprintf(stderr, "Invalid message recieved: %s", buf);
+			continue;
+		}
+
+		// send contents of buf back
+		send:
+		if (sendto(netfd, buf, strlen(buf) + 1, 0, (struct sockaddr*) &addr, sizeof(struct sockaddr_in)) == -1) {
+			if (errno == EAGAIN || errno == EINTR) goto send;
+			dprintf("Failed send, dropping\n");
 			continue;
 		}
 	}
