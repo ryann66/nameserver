@@ -6,6 +6,8 @@
 
 #include "server.h"
 
+#define DB_FILEPATH "./db.txt"
+
 /**
  * Initializes the database for normal operations
  */
