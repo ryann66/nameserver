@@ -13,7 +13,14 @@ static FILE* dbfd;
 
 // returns true if found, else false (and seeks to end of file)
 static bool seek_to_serv(char serv[MAX_ENTRY_LENGTH]) {
-
+	assert(fseek(dbfd, 0, SEEK_SET) == 0);
+	char buf[FILE_LINE_LENGTH];
+	while (fread(buf, sizeof(char), FILE_LINE_LENGTH, dbfd) > 0) {
+		if (strncmp(buf, serv, MAX_ENTRY_LENGTH)) continue;
+		assert(fseek(dbfd, -FILE_LINE_LENGTH, SEEK_CUR) == 0);
+		return true;
+	}
+	return false;
 }
 
 int init() {
@@ -71,8 +78,8 @@ bool find_serv(char serv[MAX_ENTRY_LENGTH], struct sockaddr_in *ipp_out)
 	char buf[FILE_LINE_LENGTH];
 	assert(fread(buf, sizeof(char), FILE_LINE_LENGTH, dbfd) == FILE_LINE_LENGTH);
 	
-	assert(!string_to_ip(&ipp_out, buf + MAX_ENTRY_LENGTH + 1));
-	assert(!string_to_port(&ipp_out, buf + MAX_ENTRY_LENGTH + IPV4_MAX_LENGTH + 2));
+	assert(!string_to_ip(ipp_out, buf + MAX_ENTRY_LENGTH + 1));
+	assert(!string_to_port(ipp_out, buf + MAX_ENTRY_LENGTH + IPV4_MAX_LENGTH + 2));
 	ipp_out->sin_family = AF_INET;
 
 	return true;
