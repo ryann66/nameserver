@@ -15,8 +15,12 @@ static FILE* dbfd;
 static bool seek_to_serv(char serv[MAX_ENTRY_LENGTH]) {
 	assert(fseek(dbfd, 0, SEEK_SET) == 0);
 	char buf[FILE_LINE_LENGTH];
+
+	volatile int  r;
+	
 	while (fread(buf, sizeof(char), FILE_LINE_LENGTH, dbfd) > 0) {
-		if (strncmp(buf, serv, MAX_ENTRY_LENGTH)) continue;
+		r = ftell(dbfd);
+		if (strcmp(buf, serv)) continue;
 		assert(fseek(dbfd, -FILE_LINE_LENGTH, SEEK_CUR) == 0);
 		return true;
 	}
@@ -24,9 +28,10 @@ static bool seek_to_serv(char serv[MAX_ENTRY_LENGTH]) {
 }
 
 int init() {
-	dbfd = fopen(DB_FILEPATH, "ax");
-	if (dbfd == NULL) return -1;
-	return 0;
+	dbfd = fopen(DB_FILEPATH, "a+b");
+	if (dbfd) return 0;
+	fprintf(stderr, "Failed to open database exclusively\n");
+	return 1;
 }
 
 void register_serv(char serv[MAX_ENTRY_LENGTH], struct sockaddr_in ipp)
@@ -44,6 +49,7 @@ void register_serv(char serv[MAX_ENTRY_LENGTH], struct sockaddr_in ipp)
 
 	seek_to_serv(serv);
 	assert(fwrite(caclin, sizeof(char), FILE_LINE_LENGTH, dbfd) == FILE_LINE_LENGTH);
+	fflush(dbfd);
 }
 
 bool deregister_serv(char serv[MAX_ENTRY_LENGTH])
@@ -51,15 +57,20 @@ bool deregister_serv(char serv[MAX_ENTRY_LENGTH])
 	char tmp[FILE_LINE_LENGTH];
 
 	// if we can't seek, then the file must have no entries, thus failed deregister
-	if (fseek(dbfd, -FILE_LINE_LENGTH, SEEK_END)) return false;
-	long off = ftell(dbfd);
-
+	if (fseek(dbfd, -FILE_LINE_LENGTH, SEEK_END)) {
+		perror("hey");
+		return false;
+	}
+	volatile long off = ftell(dbfd);
+	
 	assert(fread(tmp, sizeof(char), FILE_LINE_LENGTH, dbfd) == FILE_LINE_LENGTH);
 	
 	if (!seek_to_serv(serv)) {
 		return false;
 	}
 	
+	off = ftell(dbfd);
+
 	// overwrite dead spot
 	assert(fwrite(tmp, sizeof(char), FILE_LINE_LENGTH, dbfd));
 	

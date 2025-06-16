@@ -1,7 +1,7 @@
 CC=gcc
 CXX=g++
 CFLAGS=
-DFLAGS=-g -Og
+DFLAGS=-g -Og -DDEBUG
 BFLAGS=-O2
 LFLAGS=
 LIBS=

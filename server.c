@@ -30,26 +30,31 @@ int main(int argc, char** argv) {
 
 	// binding
 	struct sockaddr_in addr = {.sin_family=AF_INET, .sin_port=htons(PORT_NUMBER), .sin_addr=htonl(INADDR_ANY)};
+	socklen_t addrlen;
 	if (bind(netfd, (struct sockaddr*) &addr, sizeof(addr))) {
 		close(netfd);
+		fprintf(stderr, "Failed to bind socket\n");
 		return -1;
 	}
 
 	// initialize database
-	if (init()) {
+	if (init() != 0) {
 		close(netfd);
 		return -1;
 	}
 
 	uint8_t buf[UDP_BUFFER_SIZE];
 	while (true) {
+		addrlen = sizeof(struct sockaddr_in);
+
 		// read udp message into buf
-		size_t sz = recvfrom(netfd, buf, UDP_BUFFER_SIZE - 1, 0, (struct sockaddr*) &addr, NULL);
+		size_t sz = recvfrom(netfd, buf, UDP_BUFFER_SIZE - 1, 0, (struct sockaddr*) &addr, &addrlen);
 		if (sz == -1) {
 			if (errno == EAGAIN || errno == EINTR) continue;
 			fprintf(stderr, "Unknown reading error\n");
 			return -1;
 		}
+		if (buf[sz-1] == '\n') sz--;
 		buf[sz] = '\0';
 
 		if (addr.sin_family != AF_INET) {
@@ -66,7 +71,7 @@ int main(int argc, char** argv) {
 		}
 		
 		// parse message
-		if (strncmp(buf, KEYWORD_GET, KEYWORD_LEN)) {
+		if (!strncmp(buf, KEYWORD_GET, KEYWORD_LEN)) {
 			char* ebuf = buf + strlen(buf);
 			struct sockaddr_in out;
 			if (find_serv(buf+KEYWORD_LEN, &out)) {
@@ -94,7 +99,7 @@ int main(int argc, char** argv) {
 			} else {
 				strcpy(buf, KEYWORD_ERR_NOT_FOUND);
 			}
-		} else if (strncmp(buf, KEYWORD_REGISTER, KEYWORD_LEN) == 0) {
+		} else if (!strncmp(buf, KEYWORD_REGISTER, KEYWORD_LEN)) {
 			struct sockaddr_in tmp;
 			tmp.sin_family = AF_INET;
 			
@@ -114,10 +119,10 @@ int main(int argc, char** argv) {
 			register_serv(buf + KEYWORD_LEN, tmp);
 			
 			strcpy(buf, KEYWORD_SUC_REG);
-		} else if (strncmp(buf, KEYWORD_SELF_REGISTER, KEYWORD_LEN)) {
+		} else if (!strncmp(buf, KEYWORD_SELF_REGISTER, KEYWORD_LEN)) {
 			register_serv(buf + KEYWORD_LEN, addr);
 			strcpy(buf, KEYWORD_SUC_REG);
-		} else if (strncmp(buf, KEYWORD_DEREGISTER, KEYWORD_LEN)) {
+		} else if (!strncmp(buf, KEYWORD_DEREGISTER, KEYWORD_LEN)) {
 			if (deregister_serv(buf + KEYWORD_LEN)) {
 				strcpy(buf, KEYWORD_SUC_DEREG);
 			} else {
@@ -125,7 +130,7 @@ int main(int argc, char** argv) {
 			}
 		} else {
 			// ignore message
-			dprintf(stderr, "Invalid message recieved: %s", buf);
+			dprintf("Invalid message recieved: %s", buf);
 			continue;
 		}
 
