@@ -22,24 +22,15 @@
 
 #define PORT_NUMBER 666
 
-// delimeter character between datapoints on a line
-#define DELIM ":"
-// delimeter character between new entries in the database (internal)
-#define ENTRY_DELIM "\n"
+#define MAX_NAME_LENGTH 128
 
-static_assert(sizeof(DELIM) == 2);
-static_assert(sizeof(ENTRY_DELIM) == 2);
-
-// length of lines in the file
-#define FILE_LINE_LENGTH 256
 // length of ipv4 addresses
 #define IPV4_MAX_LENGTH 15
 // length of port numbers
 #define PORT_MAX_LENGTH 5
-// max length of a service name
-#define MAX_ENTRY_LENGTH ((FILE_LINE_LENGTH) - (IPV4_MAX_LENGTH) - (PORT_MAX_LENGTH) - 3)
 
-static_assert(MAX_ENTRY_LENGTH > 0);
+#define DELIM ":"
+static_assert(sizeof(DELIM) == 2);
 
 // keywords for interacting with the database
 #define KEYWORD_LEN 4
@@ -63,5 +54,4 @@ static_assert(sizeof(KEYWORD_SUC_GET) == KEYWORD_LEN + 1);
 
 // size of the database message buffer (must be able to hold all requests as well as largest response)
 #define UDP_BUFFER_SIZE 512
-static_assert((UDP_BUFFER_SIZE) >= (MAX_ENTRY_LENGTH) + (KEYWORD_LEN) + 1);
-static_assert((UDP_BUFFER_SIZE) >= (FILE_LINE_LENGTH) + (KEYWORD_LEN));
+static_assert(UDP_BUFFER_SIZE >= KEYWORD_LEN + 2 * (sizeof(DELIM) - 1) + IPV4_MAX_LENGTH + PORT_MAX_LENGTH);

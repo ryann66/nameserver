@@ -17,7 +17,7 @@ all: server
 server: server.o register.o
 	$(CC) $(LFLAGS) -o $@ $^ $(LIBS)
 
-register.o: register.c register.h server.h
+register.o: register.c register.h server.h utils.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 server.o: server.c server.h register.h utils.h
