@@ -22,3 +22,10 @@ bool deregister_serv(char serv[MAX_NAME_LENGTH]);
  * returns true if found, false if not found
  */
 bool find_serv(char serv[MAX_NAME_LENGTH], struct sockaddr_in* ipp_out);
+
+/**
+ * frees all entries in the database, freeing up RAM usage
+ * 
+ * Note: drops all registered server entries
+ */
+void cleanup();

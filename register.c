@@ -65,11 +65,6 @@ struct cclin* ht_find(char name[MAX_NAME_LENGTH]);
  */
 int ht_remove(char name[MAX_NAME_LENGTH]);
 
-/**
- * Recycles the hashtable completely
- */
-void clean_state();
-
 
 int ht_grow() {
 	if (serv_ht.util / serv_ht.len <= TARGET_CHAIN_LEN) return 0;
@@ -101,7 +96,7 @@ int ht_insert(struct cclin* ent) {
 	struct htb_node* node = malloc(sizeof(struct htb_node));
 	if (node == NULL) return 1;
 
-	node->next = ent;
+	node->node = *ent;
 
 	size_t hs = str_hash(ent->name);
 	node->next = serv_ht.nodes[hs % serv_ht.len];
@@ -151,7 +146,20 @@ int ht_remove(char name[MAX_NAME_LENGTH]) {
 	return 1;
 }
 
-void clean_state() {
+
+void register_serv(char serv[MAX_NAME_LENGTH], struct sockaddr_in ipp) {
+
+}
+
+bool deregister_serv(char serv[MAX_NAME_LENGTH]) {
+
+}
+
+bool find_serv(char serv[MAX_NAME_LENGTH], struct sockaddr_in* ipp_out) {
+	
+}
+
+void cleanup() {
 	// cleanup hashtable entries
 	for (size_t i = 0; i < serv_ht.len; i++) {
 		struct htb_node* next = serv_ht.nodes[i];

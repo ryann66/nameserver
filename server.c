@@ -37,12 +37,6 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	// initialize database
-	if (init() != 0) {
-		close(netfd);
-		return -1;
-	}
-
 	uint8_t buf[UDP_BUFFER_SIZE];
 	while (true) {
 		addrlen = sizeof(struct sockaddr_in);
