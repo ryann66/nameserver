@@ -21,7 +21,7 @@ static inline bool string_to_ip(struct sockaddr_in* ip, char buf[IPV4_MAX_LENGTH
 }
 
 static inline void port_to_string(struct sockaddr_in* ip, char buf[PORT_MAX_LENGTH]) {
-	sprintf(buf, "%hu", &ip->sin_port);
+	sprintf(buf, "%hu", ip->sin_port);
 }
 
 // returns true on failure, else false

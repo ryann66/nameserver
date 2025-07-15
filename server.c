@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 			struct sockaddr_in out;
 			if (find_serv(buf+KEYWORD_LEN, &out)) {
 				// change command (for response)
-				strcpy(buf, KEYWORD_SUC_GET);
+				strncpy(buf, KEYWORD_SUC_GET, KEYWORD_LEN);
 
 				// add delim after name
 				ebuf[0] = DELIM[0];
