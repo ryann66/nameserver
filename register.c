@@ -134,6 +134,7 @@ struct cclin* ht_find(char name[MAX_NAME_LENGTH]) {
 int ht_remove(char name[MAX_NAME_LENGTH]) {
 	size_t hs = str_hash(name);
 	struct htb_node* cn = serv_ht.nodes[hs % serv_ht.len];
+	if (cn == NULL) return 1;  // not found
 	if (streq(cn->node.name, name)) {
 		serv_ht.nodes[hs % serv_ht.len] = serv_ht.nodes[hs % serv_ht.len]->next;
 		free(cn);
