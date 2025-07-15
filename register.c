@@ -34,7 +34,11 @@ struct htb {
 	struct htb_node** nodes;
 };
 
-struct htb serv_ht;
+// statically allocated "array" of exactly one hashtable node pointer
+// we use so that we don't have to initialize hashtable
+static struct htb_node* auto_init_cheat;
+
+struct htb serv_ht = {.len=1, .util=0, .nodes=&auto_init_cheat};
 
 /**
  * doubles the hashtable size
@@ -85,7 +89,11 @@ int ht_grow() {
 		}
 	}
 
-	free(serv_ht.nodes);
+	// free old hashtable (only if not statically allocated)
+	if (serv_ht.nodes != &auto_init_cheat) {
+		free(serv_ht.nodes);
+	}
+
 	serv_ht.nodes = narr;
 	serv_ht.len *= 2;
 
@@ -110,7 +118,7 @@ int ht_insert(struct cclin* ent) {
 }
 
 struct cclin* ht_find(char name[MAX_NAME_LENGTH]) {
-	struct htb_node* nid = serv_ht.nodes[str_hash(name)];
+	struct htb_node* nid = serv_ht.nodes[str_hash(name) % serv_ht.len];
 
 	while (nid != NULL) {
 		if (streq(nid->node.name, name)) {
@@ -150,15 +158,29 @@ int ht_remove(char name[MAX_NAME_LENGTH]) {
 
 
 void register_serv(char serv[MAX_NAME_LENGTH], struct sockaddr_in ipp) {
-
+	struct cclin* nd = ht_find(serv);
+	if (nd != NULL) {
+		nd->addr = ipp;
+	} else {
+		struct cclin tmp;
+		tmp.addr = ipp;
+		memcpy(tmp.name, serv, MAX_NAME_LENGTH);
+		ht_insert(&tmp);
+	}
 }
 
 bool deregister_serv(char serv[MAX_NAME_LENGTH]) {
-
+	return !ht_remove(serv);
 }
 
 bool find_serv(char serv[MAX_NAME_LENGTH], struct sockaddr_in* ipp_out) {
-	
+	struct cclin* nd = ht_find(serv);
+	if (nd != NULL) {
+		*ipp_out = nd->addr;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void cleanup() {

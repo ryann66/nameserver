@@ -96,21 +96,34 @@ int main(int argc, char** argv) {
 		} else if (!strncmp(buf, KEYWORD_REGISTER, KEYWORD_LEN)) {
 			struct sockaddr_in tmp;
 			tmp.sin_family = AF_INET;
-			
-			char* narg = strchr(buf + KEYWORD_LEN, DELIM[0]);
-			if (narg != NULL) narg[0] == '\0';  // leave null byte for later use of service name
-			if (narg++ == NULL || strlen(narg) < IPV4_MAX_LENGTH || string_to_ip(&tmp, narg)) {
+
+			// setup string components
+			char* name = buf + KEYWORD_LEN;
+			char* ip = strchr(name, DELIM[0]);
+			if (ip == NULL) {
+				dprintf("Invalid format\n");
+				return 1;
+			}
+			ip[0] = '\0';
+			ip++;
+			char* port = strchr(ip, DELIM[0]);
+			if (port == NULL) {
+				dprintf("Invalid format\n");
+				return 1;
+			}
+			port[0] = '\0';
+			port++;
+
+			if (string_to_ip(&tmp, ip)) {
 				dprintf("Invalid register IP\n");
 				continue;
 			}
-
-			narg = strchr(narg, DELIM[0]);
-			if (narg++ == NULL || strlen(narg) < PORT_MAX_LENGTH || string_to_port(&tmp, narg)) {
+			if (string_to_port(&tmp, port)) {
 				dprintf("Invalid register port\n");
 				continue;
 			}
 
-			register_serv(buf + KEYWORD_LEN, tmp);
+			register_serv(name, tmp);
 			
 			strcpy(buf, KEYWORD_SUC_REG);
 		} else if (!strncmp(buf, KEYWORD_SELF_REGISTER, KEYWORD_LEN)) {

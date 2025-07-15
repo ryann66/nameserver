@@ -32,7 +32,7 @@ static inline bool string_to_port(struct sockaddr_in* ip, char buf[PORT_MAX_LENG
 static size_t str_hash(const char* str) {
 	size_t sum = 0;
 	while (*str) {
-		sum = sum * 31 + *str;
+		sum = sum * 31 + *str++;
 	}
 	return sum;
 }
