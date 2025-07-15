@@ -104,7 +104,9 @@ int ht_insert(struct cclin* ent) {
 
 	serv_ht.util++;
 
-	return ht_grow();
+	ht_grow();
+
+	return 0;
 }
 
 struct cclin* ht_find(char name[MAX_NAME_LENGTH]) {
